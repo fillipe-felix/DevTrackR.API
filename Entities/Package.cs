@@ -19,4 +19,18 @@ public class Package
     public bool Delivered { get; private set; }
     public DateTime PostedAt { get; private set; }
     public List<PackageUpdate> Updates { get; private set; }
+
+    public void AddUpdate(string status, bool delivered)
+    {
+        if (Delivered)
+        {
+            throw new Exception("Package is already delivered");
+        }
+        
+        var update = new PackageUpdate(status, Id);
+
+        Updates.Add(update);
+        Delivered = delivered;
+        
+    }
 }
