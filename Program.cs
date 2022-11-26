@@ -2,11 +2,21 @@ using System.Reflection;
 using System.Text.Json.Serialization;
 
 using DevTrackR.API.Persistence;
+using DevTrackR.API.Repository;
+
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddSingleton<DevTrackRContext>();
+
+var connectionString = builder.Configuration.GetConnectionString("DevTrackeRCs");
+builder.Services
+    .AddDbContext<DevTrackRContext>(o => o.UseSqlServer(connectionString));
+
+//builder.Services.AddDbContext<DevTrackRContext>(o => o.UseInMemoryDatabase("DevTrackeR"));
+
+builder.Services.AddScoped<IPackageRepository, PackageRepository>();
 
 builder.Services.AddControllers().AddJsonOptions(options =>
     options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
