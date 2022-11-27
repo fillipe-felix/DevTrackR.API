@@ -6,6 +6,8 @@ using DevTrackR.API.Repository;
 
 using Microsoft.EntityFrameworkCore;
 
+using SendGrid.Extensions.DependencyInjection;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -17,6 +19,10 @@ builder.Services
 //builder.Services.AddDbContext<DevTrackRContext>(o => o.UseInMemoryDatabase("DevTrackeR"));
 
 builder.Services.AddScoped<IPackageRepository, PackageRepository>();
+
+var sendGridApiKey = builder.Configuration.GetSection("SendGridApiKey").Value;
+
+builder.Services.AddSendGrid(o => o.ApiKey = sendGridApiKey);
 
 builder.Services.AddControllers().AddJsonOptions(options =>
     options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));

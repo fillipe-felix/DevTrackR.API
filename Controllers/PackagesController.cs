@@ -1,10 +1,11 @@
 ﻿using DevTrackR.API.Entities;
 using DevTrackR.API.Models;
-using DevTrackR.API.Persistence;
 using DevTrackR.API.Repository;
 
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+
+using SendGrid;
+using SendGrid.Helpers.Mail;
 
 namespace DevTrackR.API.Controllers;
 
@@ -16,10 +17,12 @@ namespace DevTrackR.API.Controllers;
 public class PackagesController : ControllerBase
 {
     private readonly IPackageRepository _packageRepository;
+    private readonly ISendGridClient _sendGridClient;
 
-    public PackagesController(IPackageRepository packageRepository)
+    public PackagesController(IPackageRepository packageRepository, ISendGridClient sendGridClient)
     {
         _packageRepository = packageRepository;
+        _sendGridClient = sendGridClient;
     }
 
     /// <summary>
@@ -31,14 +34,11 @@ public class PackagesController : ControllerBase
     {
         var packages = _packageRepository.GetAll();
 
-        if (!packages.Any())
-        {
-            return NotFound();
-        }
-        
+        if (!packages.Any()) return NotFound();
+
         return Ok(packages);
     }
-    
+
     /// <summary>
     /// Busca um pacote através do código
     /// </summary>
@@ -49,27 +49,35 @@ public class PackagesController : ControllerBase
     {
         var package = _packageRepository.GetByCode(code);
 
-        if (package is null)
-        {
-            return NotFound();
-        }
+        if (package is null) return NotFound();
 
         return Ok(package);
     }
-    
+
     /// <summary>
     /// Adiciona um pacote
     /// </summary>
     /// <param name="model">modelo de entrada</param>
     /// <returns></returns>
     [HttpPost]
-    public IActionResult Post(AddPackageInputModel model)
+    public async Task<IActionResult> Post(AddPackageInputModel model)
     {
         var package = new Package(model.Title, model.Weight);
 
         _packageRepository.Add(package);
+
+        var message = new SendGridMessage
+        {
+            From = new EmailAddress("skambookapp@gmail.com", "DevTrackR"),
+            Subject = "Your package was dispatched",
+            PlainTextContent = $"Your package with code {package.Code} was dispatched"
+        };
         
-        return CreatedAtAction("GetByCode", new { code = package.Code}, package);
+        message.AddTo(model.SenderEmail, model.SenderName);
+
+        await _sendGridClient.SendEmailAsync(message);
+
+        return CreatedAtAction("GetByCode", new { code = package.Code }, package);
     }
 
     /// <summary>
@@ -83,14 +91,11 @@ public class PackagesController : ControllerBase
     {
         var package = _packageRepository.GetByCode(code);
 
-        if (package is null)
-        {
-            return NotFound();
-        }
+        if (package is null) return NotFound();
 
         package.AddUpdate(model.Status, model.Delivered);
         _packageRepository.Update(package);
-        
+
         return NoContent();
     }
 }
