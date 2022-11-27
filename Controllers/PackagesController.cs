@@ -57,11 +57,31 @@ public class PackagesController : ControllerBase
     /// <summary>
     /// Adiciona um pacote
     /// </summary>
+    /// <remarks>
+    /// Exemplo de body
+    /// 
+    ///     POST /Packages
+    ///     {
+    ///         "title": "Rodas bicicleta",
+    ///         "weight": 4,
+    ///         "senderEmail": "felipesoares_1993@hotmail.com",
+    ///         "senderName": "Fillipe"
+    ///     }
+    /// </remarks>
     /// <param name="model">modelo de entrada</param>
-    /// <returns></returns>
+    /// <response code="201">Cadastro realizado com sucesso</response>
+    /// <response code="400">Dados estão inválidos</response>
+    /// <returns>Objeto recém-criado</returns>
     [HttpPost]
+    [ProducesResponseType(201)]
+    [ProducesResponseType(400)]
     public async Task<IActionResult> Post(AddPackageInputModel model)
     {
+        if (model.Title.Length < 5)
+        {
+            return BadRequest("Title length must be at least 5 characteres long");
+        }
+        
         var package = new Package(model.Title, model.Weight);
 
         _packageRepository.Add(package);

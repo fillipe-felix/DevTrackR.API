@@ -55,6 +55,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 
+    //Ponto para usar o ReDoc
     app.UseReDoc(c =>
     {
         c.DocumentTitle = "REDOC API Documentation";
